@@ -156,6 +156,7 @@ textarea { min-height: 90px; }
 
 <script>
 const ADMIN_KEY = 'friendreport_admin_email_v1';
+localStorage.setItem(ADMIN_KEY, 'neohuiyuan@hotmail.com');
 
 function getAdminEmail() { return localStorage.getItem(ADMIN_KEY) || ''; }
 function storeAdminEmail(e) { localStorage.setItem(ADMIN_KEY, e.toLowerCase().trim()); }
