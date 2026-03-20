@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Friend Newsletter Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #faf8f4;
+    color: #1a1a18;
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+  .app-header { text-align: center; margin-bottom: 3rem; }
+  .app-header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.6rem; font-weight: 400;
+    color: #1a1a18; letter-spacing: -0.5px;
+  }
+  .app-header p { color: #6b6b65; font-size: 0.95rem; margin-top: 0.4rem; font-weight: 300; }
+
+  .step-indicator { display: flex; justify-content: center; gap: 6px; margin-bottom: 2.5rem; align-items: center; }
+  .step-dot { width: 8px; height: 8px; border-radius: 50%; background: #d4d0c8; transition: background 0.3s; }
+  .step-dot.active { background: #1a1a18; }
+  .step-dot.done { background: #6b6b65; }
+  .step-label { font-size: 0.78rem; color: #6b6b65; font-weight: 400; margin: 0 4px; }
+
+  .container { max-width: 680px; margin: 0 auto; }
+
+  .card {
+    background: #fff; border: 1px solid #e8e4dc;
+    border-radius: 16px; padding: 2rem; margin-bottom: 1.25rem;
+  }
+  .card-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #f0ece4;
+  }
+  .friend-avatar {
+    width: 42px; height: 42px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 600; flex-shrink: 0;
+  }
+  .friend-name-input {
+    font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 600;
+    border: none; background: transparent; color: #1a1a18; width: 180px; outline: none;
+    border-bottom: 1.5px solid #e8e4dc; padding: 2px 4px;
+  }
+  .friend-name-input:focus { border-bottom-color: #1a1a18; }
+
+  .field-group { margin-bottom: 1.25rem; }
+  .field-label {
+    font-size: 0.78rem; font-weight: 500; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #6b6b65; margin-bottom: 6px; display: block;
+  }
+  textarea, input[type="text"] {
+    width: 100%; font-family: 'DM Sans', sans-serif; font-size: 0.92rem;
+    font-weight: 300; color: #1a1a18; border: 1px solid #e8e4dc;
+    border-radius: 8px; padding: 10px 14px; background: #faf8f4;
+    resize: vertical; outline: none; transition: border-color 0.2s; line-height: 1.6;
+  }
+  textarea:focus, input[type="text"]:focus { border-color: #1a1a18; background: #fff; }
+  textarea { min-height: 85px; }
+
+  .photo-upload {
+    border: 1.5px dashed #d4d0c8; border-radius: 10px; padding: 1.5rem;
+    text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+    position: relative; background: #faf8f4;
+  }
+  .photo-upload:hover { border-color: #1a1a18; background: #f5f2ec; }
+  .photo-upload input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .photo-upload-text { font-size: 0.85rem; color: #6b6b65; font-weight: 300; }
+  .photo-upload-text strong { display: block; font-weight: 500; color: #1a1a18; margin-bottom: 2px; font-size: 0.9rem; }
+  .photo-preview { width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px; margin-top: 10px; display: none; }
+
+  .issue-meta {
+    background: #fff; border: 1px solid #e8e4dc; border-radius: 16px;
+    padding: 1.5rem 2rem; margin-bottom: 2rem; display: flex; gap: 1.5rem; align-items: flex-end;
+  }
+  .issue-meta .field-group { margin-bottom: 0; flex: 1; }
+
+  .actions { display: flex; gap: 12px; justify-content: center; margin-top: 2rem; flex-wrap: wrap; }
+  .btn {
+    font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 500;
+    padding: 12px 28px; border-radius: 50px; cursor: pointer;
+    transition: all 0.2s; border: 1.5px solid #1a1a18; text-decoration: none; display: inline-block;
+  }
+  .btn-primary { background: #1a1a18; color: #faf8f4; }
+  .btn-primary:hover { background: #2c2c29; }
+  .btn-secondary { background: transparent; color: #1a1a18; }
+  .btn-secondary:hover { background: #f0ece4; }
+
+  #previewSection { display: none; }
+
+  .nl-paper { background: #fff; border: 1px solid #e8e4dc; border-radius: 16px; overflow: hidden; }
+  .nl-masthead { background: #1a1a18; color: #faf8f4; padding: 2.5rem 2rem 2rem; text-align: center; }
+  .nl-masthead-issue { font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase; color: #a0a09a; margin-bottom: 0.5rem; }
+  .nl-masthead-title { font-family: 'Playfair Display', serif; font-size: 2.2rem; font-weight: 400; letter-spacing: -0.5px; line-height: 1.1; }
+  .nl-masthead-date { font-size: 0.8rem; color: #a0a09a; margin-top: 0.6rem; }
+  .nl-entry { padding: 2rem; border-bottom: 1px solid #f0ece4; }
+  .nl-entry:last-child { border-bottom: none; }
+  .nl-entry-header { display: flex; align-items: center; gap: 10px; margin-bottom: 1.25rem; }
+  .nl-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 0.95rem; font-weight: 600; flex-shrink: 0; }
+  .nl-entry-name { font-family: 'Playfair Display', serif; font-size: 1.15rem; font-weight: 600; color: #1a1a18; }
+  .nl-section-label { font-size: 0.7rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; color: #a0a09a; margin-bottom: 4px; margin-top: 1rem; }
+  .nl-section-label:first-of-type { margin-top: 0; }
+  .nl-section-text { font-size: 0.92rem; font-weight: 300; color: #2a2a28; line-height: 1.7; }
+  .nl-photo { width: 100%; max-height: 320px; object-fit: cover; border-radius: 10px; margin-top: 6px; }
+  .nl-footer { background: #f5f2ec; padding: 1.25rem 2rem; text-align: center; font-size: 0.78rem; color: #a0a09a; font-weight: 300; }
+
+  .copy-box {
+    background: #faf8f4; border: 1px solid #e8e4dc; border-radius: 10px;
+    padding: 1rem 1.25rem; margin-top: 1.5rem; font-size: 0.82rem; color: #6b6b65; line-height: 1.6;
+  }
+  .copy-box strong { color: #1a1a18; font-weight: 500; display: block; margin-bottom: 4px; }
+
+  @media (max-width: 500px) {
+    .issue-meta { flex-direction: column; }
+    .nl-masthead-title { font-size: 1.7rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="app-header">
+    <h1>The Friend Report</h1>
+    <p>Fill in your bits, then generate your newsletter</p>
+  </div>
+
+  <div class="step-indicator">
+    <div class="step-dot active" id="dot0"></div>
+    <span class="step-label">Fill in</span>
+    <div class="step-dot" id="dot1"></div>
+    <span class="step-label">Preview &amp; export</span>
+  </div>
+
+  <div id="fillSection">
+    <div class="issue-meta">
+      <div class="field-group">
+        <label class="field-label">Newsletter name</label>
+        <input type="text" id="nlName" value="The Friend Report" placeholder="e.g. The Dispatch">
+      </div>
+      <div class="field-group" style="max-width:140px;">
+        <label class="field-label">Issue #</label>
+        <input type="text" id="nlIssue" value="1" placeholder="1">
+      </div>
+    </div>
+
+    <div id="friendCards"></div>
+
+    <div class="actions">
+      <button class="btn btn-secondary" onclick="addFriend()">+ Add another friend</button>
+      <button class="btn btn-primary" onclick="generatePreview()">Generate newsletter →</button>
+    </div>
+  </div>
+
+  <div id="previewSection">
+    <p style="text-align:center;color:#6b6b65;font-size:0.9rem;margin-bottom:1.5rem;font-weight:300;">Here's your newsletter — copy or download the HTML to send it.</p>
+    <div class="nl-paper" id="newsletterOutput"></div>
+    <div class="copy-box">
+      <strong>How to share</strong>
+      Download the HTML file and open it in a browser, then print or forward it — or paste the copied HTML directly into Gmail's HTML compose mode (use a browser extension like "Gmail HTML" to enable this).
+    </div>
+    <div class="actions" style="margin-top:1.5rem;">
+      <button class="btn btn-secondary" onclick="goBack()">← Edit entries</button>
+      <button class="btn btn-primary" onclick="copyHTML(this)">Copy newsletter HTML</button>
+      <button class="btn btn-secondary" onclick="downloadHTML()">Download HTML</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const COLORS = [
+  { bg: '#fde8d8', color: '#b34a1a' },
+  { bg: '#dff0e8', color: '#1a7a48' },
+  { bg: '#e8e0f5', color: '#5a3ab5' },
+  { bg: '#fde8f0', color: '#b31a5a' },
+  { bg: '#e0eef8', color: '#1a5ab3' },
+];
+
+let friendCount = 0;
+
+function initials(name) {
+  return (name||'?').trim().split(/\s+/).map(n=>n[0]).join('').toUpperCase().slice(0,2);
+}
+
+function addFriend(preset) {
+  const idx = friendCount++;
+  const col = COLORS[idx % COLORS.length];
+  const name = preset || 'Friend ' + (idx+1);
+  const div = document.createElement('div');
+  div.className = 'card'; div.id = 'fc-'+idx; div.dataset.idx = idx;
+  div.innerHTML =
+    '<div class="card-header">' +
+      '<div class="friend-avatar" id="av-'+idx+'" style="background:'+col.bg+';color:'+col.color+'">'+initials(name)+'</div>' +
+      '<input class="friend-name-input" id="fn-'+idx+'" value="'+escAttr(name)+'" placeholder="Name" oninput="refreshAv('+idx+')">' +
+      (idx>0?'<button onclick="removeCard('+idx+')" style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:1.3rem;color:#c0bbb2;line-height:1;" title="Remove">&#215;</button>':'') +
+    '</div>' +
+    '<div class="field-group"><label class="field-label">What\'s new in your life?</label>' +
+      '<textarea id="upd-'+idx+'" placeholder="Fill us in — anything from the mundane to the momentous..."></textarea></div>' +
+    '<div class="field-group"><label class="field-label">Free write — anything you want to say</label>' +
+      '<textarea id="fw-'+idx+'" placeholder="A rant, a poem, a shower thought, a confession..."></textarea></div>' +
+    '<div class="field-group"><label class="field-label">Your question for the group</label>' +
+      '<input type="text" id="q-'+idx+'" placeholder="e.g. What\'s one thing you\'ve been putting off?"></div>' +
+    '<div class="field-group"><label class="field-label">Photo of the month</label>' +
+      '<div class="photo-upload" id="pz-'+idx+'" onclick="pickPhoto('+idx+')">' +
+        '<input type="file" id="pi-'+idx+'" accept="image/*" onchange="loadPhoto('+idx+',event)" style="pointer-events:none;">' +
+        '<div class="photo-upload-text" id="pt-'+idx+'"><strong>Upload a photo</strong>Click to choose · JPG, PNG, GIF</div>' +
+        '<img class="photo-preview" id="pp-'+idx+'" alt="">' +
+      '</div></div>';
+  document.getElementById('friendCards').appendChild(div);
+}
+
+function pickPhoto(idx) { document.getElementById('pi-'+idx).click(); }
+
+function refreshAv(idx) {
+  const n = document.getElementById('fn-'+idx).value;
+  document.getElementById('av-'+idx).textContent = initials(n);
+}
+
+function removeCard(idx) {
+  const el = document.getElementById('fc-'+idx);
+  if (el) el.remove();
+}
+
+function loadPhoto(idx, e) {
+  const file = e.target.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    const pp = document.getElementById('pp-'+idx);
+    pp.src = ev.target.result; pp.style.display = 'block';
+    document.getElementById('pt-'+idx).innerHTML = '<strong>'+escHtml(file.name)+'</strong><span style="color:#a0a09a">Click to change</span>';
+  };
+  r.readAsDataURL(file);
+}
+
+function generatePreview() {
+  const nlName = document.getElementById('nlName').value || 'The Friend Report';
+  const nlIssue = document.getElementById('nlIssue').value || '1';
+  const now = new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  const cards = document.querySelectorAll('[id^="fc-"]');
+  if (!cards.length) { alert('Add at least one friend first!'); return; }
+
+  let html = '';
+  cards.forEach(card => {
+    const idx = card.dataset.idx;
+    const name = document.getElementById('fn-'+idx)?.value || 'Friend';
+    const upd = document.getElementById('upd-'+idx)?.value;
+    const fw = document.getElementById('fw-'+idx)?.value;
+    const q = document.getElementById('q-'+idx)?.value;
+    const pp = document.getElementById('pp-'+idx);
+    const photo = pp && pp.style.display !== 'none' ? pp.src : null;
+    const col = COLORS[parseInt(idx) % COLORS.length];
+    html +=
+      '<div class="nl-entry">' +
+        '<div class="nl-entry-header">' +
+          '<div class="nl-avatar" style="background:'+col.bg+';color:'+col.color+'">'+initials(name)+'</div>' +
+          '<div class="nl-entry-name">'+escHtml(name)+'</div>' +
+        '</div>' +
+        (upd ? '<div class="nl-section-label">What\'s new</div><p class="nl-section-text">'+escHtml(upd)+'</p>' : '') +
+        (fw ? '<div class="nl-section-label">Free write</div><p class="nl-section-text">'+escHtml(fw)+'</p>' : '') +
+        (q ? '<div class="nl-section-label">Question for the group</div><p class="nl-section-text" style="font-style:italic">&ldquo;'+escHtml(q)+'&rdquo;</p>' : '') +
+        (photo ? '<div class="nl-section-label">Photo of the month</div><img class="nl-photo" src="'+photo+'" alt="Photo by '+escAttr(name)+'">' : '') +
+      '</div>';
+  });
+
+  document.getElementById('newsletterOutput').innerHTML =
+    '<div class="nl-masthead">' +
+      '<div class="nl-masthead-issue">Issue No. '+escHtml(nlIssue)+'</div>' +
+      '<div class="nl-masthead-title">'+escHtml(nlName)+'</div>' +
+      '<div class="nl-masthead-date">'+now+'</div>' +
+    '</div>' +
+    html +
+    '<div class="nl-footer">Made with The Friend Report builder &middot; '+now+'</div>';
+
+  document.getElementById('fillSection').style.display = 'none';
+  document.getElementById('previewSection').style.display = 'block';
+  document.getElementById('dot0').classList.replace('active','done');
+  document.getElementById('dot1').classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function goBack() {
+  document.getElementById('previewSection').style.display = 'none';
+  document.getElementById('fillSection').style.display = 'block';
+  document.getElementById('dot1').classList.remove('active');
+  document.getElementById('dot0').classList.replace('done','active');
+}
+
+function fullHTML() {
+  const inner = document.getElementById('newsletterOutput').innerHTML;
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Newsletter</title><style>' +
+    'body{font-family:Georgia,serif;background:#faf8f4;margin:0;padding:2rem 1rem;}' +
+    '.nl-paper{max-width:660px;margin:0 auto;background:#fff;border:1px solid #e8e4dc;border-radius:16px;overflow:hidden;}' +
+    '.nl-masthead{background:#1a1a18;color:#faf8f4;padding:2.5rem 2rem;text-align:center;}' +
+    '.nl-masthead-issue{font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;color:#a0a09a;margin-bottom:0.5rem;}' +
+    '.nl-masthead-title{font-size:2rem;font-weight:400;letter-spacing:-0.5px;}' +
+    '.nl-masthead-date{font-size:0.8rem;color:#a0a09a;margin-top:0.6rem;}' +
+    '.nl-entry{padding:2rem;border-bottom:1px solid #f0ece4;}' +
+    '.nl-entry:last-child{border-bottom:none;}' +
+    '.nl-entry-header{display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;}' +
+    '.nl-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.95rem;font-weight:600;}' +
+    '.nl-entry-name{font-size:1.15rem;font-weight:600;}' +
+    '.nl-section-label{font-size:0.7rem;font-weight:500;text-transform:uppercase;letter-spacing:0.1em;color:#a0a09a;margin:1rem 0 4px;}' +
+    '.nl-section-text{font-size:0.92rem;color:#2a2a28;line-height:1.7;margin:0;}' +
+    '.nl-photo{width:100%;max-height:320px;object-fit:cover;border-radius:10px;margin-top:6px;display:block;}' +
+    '.nl-footer{background:#f5f2ec;padding:1.25rem 2rem;text-align:center;font-size:0.78rem;color:#a0a09a;}' +
+    '</style></head><body><div class="nl-paper">'+inner+'</div></body></html>';
+}
+
+function copyHTML(btn) {
+  navigator.clipboard.writeText(fullHTML()).then(() => {
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy newsletter HTML', 2200);
+  }).catch(() => alert('Copy failed — try downloading instead.'));
+}
+
+function downloadHTML() {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([fullHTML()],{type:'text/html'}));
+  a.download = 'newsletter.html'; a.click();
+}
+
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+function escAttr(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+}
+
+addFriend('Friend 1');
+addFriend('Friend 2');
+</script>
+</body>
+</html>
