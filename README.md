@@ -1,1 +1,1 @@
-click on the template and fill it out accordingly
+https://huiyuanneo.github.io/newsletter/newsletter_template.html
