@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Friend Report — Editor</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: #faf8f4; color: #1a1a18; min-height: 100vh; padding: 2rem 1rem; }
+.container { max-width: 720px; margin: 0 auto; }
+
+.app-header { text-align: center; margin-bottom: 0.75rem; }
+.app-header h1 { font-family: 'Playfair Display', serif; font-size: 2.4rem; font-weight: 400; letter-spacing: -0.5px; }
+.editor-badge { display: inline-block; font-size: 0.72rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; background: #1a1a18; color: #faf8f4; padding: 3px 12px; border-radius: 20px; margin-bottom: 2rem; }
+
+.tab-bar { display: flex; gap: 0; border-bottom: 1px solid #e8e4dc; margin-bottom: 1.75rem; }
+.tab { font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 400; padding: 10px 20px; border: none; background: none; cursor: pointer; color: #a0a09a; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.2s; }
+.tab.active { color: #1a1a18; border-bottom-color: #1a1a18; font-weight: 500; }
+
+.card { background: #fff; border: 1px solid #e8e4dc; border-radius: 16px; padding: 2rem; margin-bottom: 1.25rem; }
+.card-title { font-family: 'Playfair Display', serif; font-size: 1.15rem; font-weight: 400; margin-bottom: 0.25rem; }
+.card-sub { font-size: 0.82rem; color: #6b6b65; font-weight: 300; margin-bottom: 1.5rem; line-height: 1.6; }
+
+.friend-card { background: #fff; border: 1px solid #e8e4dc; border-radius: 14px; padding: 1.5rem 1.75rem; margin-bottom: 1rem; position: relative; }
+.friend-header { display: flex; align-items: center; gap: 12px; margin-bottom: 1.25rem; padding-bottom: 0.9rem; border-bottom: 1px solid #f0ece4; }
+.friend-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 600; flex-shrink: 0; }
+.friend-name-input { font-family: 'Playfair Display', serif; font-size: 1.05rem; font-weight: 600; border: none; background: transparent; color: #1a1a18; outline: none; border-bottom: 1.5px solid #e8e4dc; padding: 2px 4px; width: 180px; }
+.friend-name-input:focus { border-bottom-color: #1a1a18; }
+.remove-btn { margin-left: auto; background: none; border: none; cursor: pointer; font-size: 1.2rem; color: #c0bbb2; line-height: 1; padding: 0; transition: color 0.15s; }
+.remove-btn:hover { color: #c0392b; }
+
+.field-group { margin-bottom: 1.1rem; }
+.field-label { font-size: 0.73rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: #6b6b65; margin-bottom: 5px; display: block; }
+textarea, input[type="text"], input[type="email"] {
+  width: 100%; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 300;
+  color: #1a1a18; border: 1px solid #e8e4dc; border-radius: 8px; padding: 9px 13px;
+  background: #faf8f4; resize: vertical; outline: none; transition: border-color 0.2s; line-height: 1.6;
+}
+textarea:focus, input:focus { border-color: #1a1a18; background: #fff; }
+textarea { min-height: 80px; }
+
+.photo-upload { border: 1.5px dashed #d4d0c8; border-radius: 10px; padding: 1.1rem; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; background: #faf8f4; }
+.photo-upload:hover { border-color: #1a1a18; }
+.photo-upload input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.photo-upload-text { font-size: 0.8rem; color: #6b6b65; font-weight: 300; }
+.photo-upload-text strong { font-weight: 500; color: #1a1a18; display: block; font-size: 0.85rem; margin-bottom: 1px; }
+.photo-preview { width: 100%; max-height: 160px; object-fit: cover; border-radius: 8px; margin-top: 8px; display: none; }
+
+.btn { font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 500; padding: 11px 26px; border-radius: 50px; cursor: pointer; transition: all 0.2s; border: 1.5px solid #1a1a18; display: inline-block; }
+.btn-primary { background: #1a1a18; color: #faf8f4; }
+.btn-primary:hover { background: #2c2c29; }
+.btn-secondary { background: transparent; color: #1a1a18; }
+.btn-secondary:hover { background: #f0ece4; }
+.btn-sm { padding: 7px 16px; font-size: 0.82rem; }
+.btn-ghost { border-color: #e8e4dc; color: #6b6b65; }
+.btn-ghost:hover { background: #f5f2ec; border-color: #c0bbb2; color: #1a1a18; }
+
+.actions { display: flex; gap: 10px; justify-content: center; margin-top: 1.5rem; flex-wrap: wrap; }
+
+.nl-meta-row { display: flex; gap: 1rem; margin-bottom: 1.1rem; }
+.nl-meta-row .field-group { margin-bottom: 0; flex: 1; }
+
+.nl-paper { background: #fff; border: 1px solid #e8e4dc; border-radius: 16px; overflow: hidden; margin-top: 1.5rem; }
+.nl-masthead { background: #1a1a18; color: #faf8f4; padding: 2.5rem 2rem; text-align: center; }
+.nl-masthead-issue { font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase; color: #a0a09a; margin-bottom: 0.5rem; }
+.nl-masthead-title { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 400; letter-spacing: -0.5px; }
+.nl-masthead-date { font-size: 0.8rem; color: #a0a09a; margin-top: 0.5rem; }
+.nl-entry { padding: 1.75rem 2rem; border-bottom: 1px solid #f0ece4; }
+.nl-entry:last-child { border-bottom: none; }
+.nl-entry-header { display: flex; align-items: center; gap: 10px; margin-bottom: 1.1rem; }
+.nl-avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 0.9rem; font-weight: 600; }
+.nl-entry-name { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 600; color: #1a1a18; }
+.nl-section-label { font-size: 0.68rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.1em; color: #a0a09a; margin: 0.85rem 0 3px; }
+.nl-section-text { font-size: 0.9rem; font-weight: 300; color: #2a2a28; line-height: 1.7; margin: 0; }
+.nl-photo { width: 100%; max-height: 300px; object-fit: cover; border-radius: 10px; margin-top: 5px; display: block; }
+.nl-footer { background: #f5f2ec; padding: 1.1rem 2rem; text-align: center; font-size: 0.76rem; color: #a0a09a; font-weight: 300; }
+
+.copy-box { background: #faf8f4; border: 1px solid #e8e4dc; border-radius: 10px; padding: 1rem 1.25rem; margin-top: 1.25rem; font-size: 0.82rem; color: #6b6b65; line-height: 1.6; }
+.copy-box strong { color: #1a1a18; font-weight: 500; display: block; margin-bottom: 3px; }
+
+.info-box { background: #f0eef8; border: 1px solid #d8d4f0; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; font-size: 0.84rem; color: #3a3080; line-height: 1.65; font-weight: 300; }
+.info-box strong { font-weight: 500; }
+
+.loading-overlay { display: none; position: fixed; inset: 0; background: rgba(250,248,244,0.92); align-items: center; justify-content: center; flex-direction: column; gap: 1rem; z-index: 100; }
+.loading-overlay.show { display: flex; }
+.spinner { width: 32px; height: 32px; border: 2.5px solid #e8e4dc; border-top-color: #1a1a18; border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-overlay p { font-size: 0.92rem; color: #6b6b65; font-weight: 300; }
+
+.sep { height: 1px; background: #f0ece4; margin: 1.25rem 0; }
+
+.add-friend-btn { width: 100%; padding: 14px; border: 1.5px dashed #d4d0c8; border-radius: 14px; background: transparent; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; color: #a0a09a; transition: all 0.2s; margin-bottom: 1rem; }
+.add-friend-btn:hover { border-color: #1a1a18; color: #1a1a18; background: #f5f2ec; }
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <p id="loadingMsg">Sending newsletter...</p>
+</div>
+
+<div class="container">
+  <div class="app-header">
+    <h1>The Friend Report</h1>
+    <div><span class="editor-badge">Editor view</span></div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="showTab('compile')">Compile entries</button>
+    <button class="tab" onclick="showTab('send')">Preview &amp; send</button>
+  </div>
+
+  <!-- ===== TAB 1: COMPILE ===== -->
+  <div id="tabCompile">
+    <div class="info-box">
+      <strong>How it works:</strong> When friends submit via <code>form.html</code>, their entries land in your inbox. Copy their answers into the cards below. Add as many friends as you like, then switch to Preview &amp; Send.
+    </div>
+
+    <div id="friendCards"></div>
+
+    <button class="add-friend-btn" onclick="addFriend()">+ Add another friend</button>
+
+    <div class="actions">
+      <button class="btn btn-primary" onclick="showTab('send'); buildPreview()">Preview newsletter →</button>
+    </div>
+  </div>
+
+  <!-- ===== TAB 2: PREVIEW & SEND ===== -->
+  <div id="tabSend" style="display:none;">
+
+    <div class="card">
+      <div class="card-title">Newsletter details</div>
+      <div class="card-sub" style="margin-bottom:1.1rem;">Set the name, issue number, and who to send it to.</div>
+
+      <div class="nl-meta-row">
+        <div class="field-group">
+          <label class="field-label">Newsletter name</label>
+          <input type="text" id="nlName" value="The Friend Report" placeholder="e.g. The Dispatch">
+        </div>
+        <div class="field-group" style="max-width:130px;">
+          <label class="field-label">Issue #</label>
+          <input type="text" id="nlIssue" value="1">
+        </div>
+      </div>
+
+      <div class="field-group" style="margin-bottom:0;">
+        <label class="field-label">Send to (comma-separated emails)</label>
+        <input type="text" id="recipientEmails" placeholder="friend1@email.com, friend2@email.com, ...">
+      </div>
+    </div>
+
+    <div class="actions" style="margin-top:0.25rem;">
+      <button class="btn btn-secondary" onclick="buildPreview()">Refresh preview</button>
+      <button class="btn btn-primary" onclick="sendNewsletter()">Send via Gmail →</button>
+    </div>
+
+    <div id="previewWrap" style="display:none;">
+      <div class="nl-paper" id="nlPreview"></div>
+      <div class="copy-box">
+        <strong>Or share manually</strong>
+        Copy or download the HTML and paste it into any email client.
+      </div>
+      <div class="actions">
+        <button class="btn btn-secondary" onclick="copyHTML(this)">Copy HTML</button>
+        <button class="btn btn-secondary" onclick="downloadHTML()">Download HTML</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const COLORS = [
+  {bg:'#fde8d8',color:'#b34a1a'},
+  {bg:'#dff0e8',color:'#1a7a48'},
+  {bg:'#e8e0f5',color:'#5a3ab5'},
+  {bg:'#fde8f0',color:'#b31a5a'},
+  {bg:'#e0eef8',color:'#1a5ab3'},
+  {bg:'#fef5e0',color:'#a07010'},
+];
+
+let friendCount = 0;
+
+function initials(name) {
+  return (name||'?').trim().split(/\s+/).map(n=>n[0]).join('').toUpperCase().slice(0,2);
+}
+
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\n/g,'<br>');
+}
+
+function addFriend(preset) {
+  const idx = friendCount++;
+  const col = COLORS[idx % COLORS.length];
+  const name = preset || '';
+
+  const div = document.createElement('div');
+  div.className = 'friend-card';
+  div.id = 'fc-' + idx;
+  div.dataset.idx = idx;
+
+  div.innerHTML =
+    '<div class="friend-header">' +
+      '<div class="friend-avatar" id="av-'+idx+'" style="background:'+col.bg+';color:'+col.color+'">' + (name ? initials(name) : '?') + '</div>' +
+      '<input class="friend-name-input" id="fn-'+idx+'" value="'+escAttr(name)+'" placeholder="Friend\'s name" oninput="refreshAv('+idx+')">' +
+      '<button class="remove-btn" onclick="removeFriend('+idx+')" title="Remove">&#215;</button>' +
+    '</div>' +
+    '<div class="field-group"><label class="field-label">What\'s new in their life?</label>' +
+      '<textarea id="upd-'+idx+'" placeholder="Paste from their email..."></textarea></div>' +
+    '<div class="field-group"><label class="field-label">Free write</label>' +
+      '<textarea id="fw-'+idx+'" placeholder="Paste from their email..."></textarea></div>' +
+    '<div class="field-group"><label class="field-label">Question for the group</label>' +
+      '<input type="text" id="q-'+idx+'" placeholder="Paste from their email..."></div>' +
+    '<div class="field-group"><label class="field-label">Photo</label>' +
+      '<div class="photo-upload" onclick="document.getElementById(\'pi-'+idx+'\').click()">' +
+        '<input type="file" id="pi-'+idx+'" accept="image/*" onchange="loadPhoto('+idx+',event)" style="pointer-events:none;">' +
+        '<div class="photo-upload-text" id="pt-'+idx+'"><strong>Upload photo</strong>Click to choose</div>' +
+        '<img class="photo-preview" id="pp-'+idx+'" alt="">' +
+      '</div></div>';
+
+  document.getElementById('friendCards').appendChild(div);
+}
+
+function refreshAv(idx) {
+  const n = document.getElementById('fn-'+idx).value;
+  document.getElementById('av-'+idx).textContent = initials(n) || '?';
+}
+
+function removeFriend(idx) {
+  const el = document.getElementById('fc-'+idx);
+  if (el) el.remove();
+}
+
+function loadPhoto(idx, e) {
+  const file = e.target.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    const pp = document.getElementById('pp-'+idx);
+    pp.src = ev.target.result; pp.style.display = 'block';
+    document.getElementById('pt-'+idx).innerHTML = '<strong>'+escHtml(file.name)+'</strong><span style="color:#a0a09a">Click to change</span>';
+  };
+  r.readAsDataURL(file);
+}
+
+// ---- TABS ----
+function showTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='compile')||(i===1&&tab==='send')));
+  document.getElementById('tabCompile').style.display = tab==='compile' ? 'block' : 'none';
+  document.getElementById('tabSend').style.display = tab==='send' ? 'block' : 'none';
+  if (tab==='send') buildPreview();
+}
+
+// ---- NEWSLETTER BUILD ----
+function collectEntries() {
+  return Array.from(document.querySelectorAll('[id^="fc-"]')).map((card, i) => {
+    const idx = card.dataset.idx;
+    const name = (document.getElementById('fn-'+idx)?.value || '').trim();
+    const upd = document.getElementById('upd-'+idx)?.value.trim();
+    const fw = document.getElementById('fw-'+idx)?.value.trim();
+    const q = document.getElementById('q-'+idx)?.value.trim();
+    const pp = document.getElementById('pp-'+idx);
+    const photo = pp && pp.style.display !== 'none' && pp.src ? pp.src : null;
+    return { name, upd, fw, q, photo, colorIdx: i };
+  }).filter(e => e.name);
+}
+
+function buildNewsletterHTML(inline) {
+  const entries = collectEntries();
+  const nlName = document.getElementById('nlName').value || 'The Friend Report';
+  const nlIssue = document.getElementById('nlIssue').value || '1';
+  const now = new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'});
+
+  const entriesHTML = entries.map((e) => {
+    const col = COLORS[e.colorIdx % COLORS.length];
+    return `<div class="nl-entry">
+      <div class="nl-entry-header">
+        <div class="nl-avatar" style="background:${col.bg};color:${col.color}">${initials(e.name)}</div>
+        <div class="nl-entry-name">${escHtml(e.name)}</div>
+      </div>
+      ${e.upd ? `<div class="nl-section-label">What's new</div><p class="nl-section-text">${escHtml(e.upd)}</p>` : ''}
+      ${e.fw ? `<div class="nl-section-label">Free write</div><p class="nl-section-text">${escHtml(e.fw)}</p>` : ''}
+      ${e.q ? `<div class="nl-section-label">Question for the group</div><p class="nl-section-text" style="font-style:italic">&ldquo;${escHtml(e.q)}&rdquo;</p>` : ''}
+      ${e.photo ? `<div class="nl-section-label">Photo of the month</div><img class="nl-photo" src="${e.photo}" alt="">` : ''}
+    </div>`;
+  }).join('');
+
+  const mastheadAndBody =
+    `<div class="nl-masthead">
+      <div class="nl-masthead-issue">Issue No. ${escHtml(nlIssue)}</div>
+      <div class="nl-masthead-title">${escHtml(nlName)}</div>
+      <div class="nl-masthead-date">${now}</div>
+    </div>${entriesHTML}<div class="nl-footer">The Friend Report &middot; ${now}</div>`;
+
+  if (inline) return mastheadAndBody;
+
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${escHtml(nlName)}</title><style>
+body{font-family:Georgia,serif;background:#faf8f4;margin:0;padding:2rem 1rem;}
+.nl-paper{max-width:660px;margin:0 auto;background:#fff;border:1px solid #e8e4dc;border-radius:16px;overflow:hidden;}
+.nl-masthead{background:#1a1a18;color:#faf8f4;padding:2.5rem 2rem;text-align:center;}
+.nl-masthead-issue{font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;color:#a0a09a;margin-bottom:0.5rem;}
+.nl-masthead-title{font-size:2rem;font-weight:400;letter-spacing:-0.5px;}
+.nl-masthead-date{font-size:0.8rem;color:#a0a09a;margin-top:0.5rem;}
+.nl-entry{padding:1.75rem 2rem;border-bottom:1px solid #f0ece4;}
+.nl-entry:last-child{border-bottom:none;}
+.nl-entry-header{display:flex;align-items:center;gap:10px;margin-bottom:1.1rem;}
+.nl-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.9rem;font-weight:600;}
+.nl-entry-name{font-size:1.1rem;font-weight:600;}
+.nl-section-label{font-size:0.68rem;font-weight:500;text-transform:uppercase;letter-spacing:0.1em;color:#a0a09a;margin:0.85rem 0 3px;}
+.nl-section-text{font-size:0.9rem;color:#2a2a28;line-height:1.7;margin:0;}
+.nl-photo{width:100%;max-height:300px;object-fit:cover;border-radius:10px;margin-top:5px;display:block;}
+.nl-footer{background:#f5f2ec;padding:1.1rem 2rem;text-align:center;font-size:0.76rem;color:#a0a09a;}
+</style></head><body><div class="nl-paper">${mastheadAndBody}</div></body></html>`;
+}
+
+function buildPreview() {
+  const entries = collectEntries();
+  const wrap = document.getElementById('previewWrap');
+  if (!entries.length) { wrap.style.display = 'none'; return; }
+  document.getElementById('nlPreview').innerHTML = buildNewsletterHTML(true);
+  wrap.style.display = 'block';
+}
+
+function copyHTML(btn) {
+  navigator.clipboard.writeText(buildNewsletterHTML(false)).then(() => {
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy HTML', 2200);
+  }).catch(() => alert('Copy failed — try downloading instead.'));
+}
+
+function downloadHTML() {
+  const nlName = document.getElementById('nlName').value || 'newsletter';
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([buildNewsletterHTML(false)],{type:'text/html'}));
+  a.download = nlName.toLowerCase().replace(/\s+/g,'-') + '.html';
+  a.click();
+}
+
+// ---- SEND VIA GMAIL ----
+async function sendNewsletter() {
+  const recipients = document.getElementById('recipientEmails').value.trim();
+  if (!recipients) { alert('Please enter recipient email addresses.'); return; }
+  const entries = collectEntries();
+  if (!entries.length) { alert('Please add at least one friend entry first.'); return; }
+
+  const nlName = document.getElementById('nlName').value || 'The Friend Report';
+  const nlIssue = document.getElementById('nlIssue').value || '1';
+  const subject = `${nlName} — Issue #${nlIssue}`;
+  const htmlBody = buildNewsletterHTML(false);
+
+  document.getElementById('loadingMsg').textContent = 'Sending newsletter via Gmail...';
+  document.getElementById('loadingOverlay').classList.add('show');
+
+  const ok = await trySendEmail(recipients, subject, htmlBody);
+  document.getElementById('loadingOverlay').classList.remove('show');
+
+  if (ok) {
+    alert('Newsletter sent successfully!');
+  } else {
+    // Fallback: open Gmail compose
+    const fallbackBody = `Hi everyone,\n\nHere is ${nlName} Issue #${nlIssue}.\n\n(Open the attached HTML file for the full formatted version.)`;
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(fallbackBody)}`;
+    if (confirm('Could not send automatically via Gmail MCP. Open Gmail compose window instead?')) {
+      window.open(gmailUrl, '_blank');
+    }
+  }
+}
+
+async function trySendEmail(to, subject, htmlBody) {
+  try {
+    const res = await fetch('https://gmail.mcp.claude.com/mcp', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ tool: 'send_email', to, subject, body: htmlBody, isHtml: true })
+    });
+    return res.ok;
+  } catch(e) { return false; }
+}
+
+function escAttr(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+}
+
+// Start with 3 friend slots
+addFriend(); addFriend(); addFriend();
+</script>
+</body>
+</html>
